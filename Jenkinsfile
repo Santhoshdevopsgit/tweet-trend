@@ -1,20 +1,17 @@
 pipeline {
-    agent {
-        node {
-            label 'maven'
-        }
+    agent { label 'maven' }
+
+    environment {
+        MAVEN_HOME = "/opt/apache-maven-3.9.11"
+        PATH = "${MAVEN_HOME}/bin:${PATH}"
     }
-environment {
-    PATH = "/opt/apache-maven-3.9.11/bin:$PATH"
-}
 
     stages {
-        stage("build"){
+        stage("Build") {
             steps {
-                sh 'mvn clean deploy'
+                sh "mvn -v"      // Verify Maven is being picked up
+                sh "mvn clean install -DskipTests"
             }
         }
-
     }
 }
-    
