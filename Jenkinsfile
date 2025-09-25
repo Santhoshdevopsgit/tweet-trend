@@ -6,11 +6,10 @@ pipeline {
         PATH = "${MAVEN_HOME}/bin:${PATH}"
     }
 
-    stages {
-        stage("Build") {
+    stages {   
+        stage('Build') {
             steps {
-                sh "mvn -v"      // Verify Maven is being picked up
-                sh "mvn clean install -DskipTests"
+                sh "mvn clean install -DskipTests=true"
             }
         }
     }
