@@ -1,4 +1,7 @@
 def registry = 'https://trialu7uj64.jfrog.io'
+def imageName = 'trialu7uj64.jfrog.io/san-docker-local/demo-workshop'
+def version   = '2.1.4'
+def app       // global variable to hold Docker image object
 
 pipeline {
     agent { label 'maven' }
@@ -27,13 +30,13 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonarqube-server') { // SonarQube server connection
+                withSonarQubeEnv('sonarqube-server') {
                     sh "${tool 'santhosh-sonar-scanner'}/bin/sonar-scanner -Dsonar.projectKey=twittertrend"
                 }
             }
         }
 
-        stage("Jar Publish") {
+        stage('Jar Publish') {
             steps {
                 script {
                     echo '<--------------- Jar Publish Started --------------->'
@@ -62,6 +65,28 @@ pipeline {
                     server.publishBuildInfo(buildInfo)
 
                     echo '<--------------- Jar Publish Ended --------------->'
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                script {
+                    echo '<--------------- Docker Build Started --------------->'
+                    app = docker.build("${imageName}:${version}")
+                    echo '<--------------- Docker Build Ended --------------->'
+                }
+            }
+        }
+
+        stage('Docker Publish') {
+            steps {
+                script {
+                    echo '<--------------- Docker Publish Started --------------->'
+                    docker.withRegistry(registry, 'artifact-cred') {
+                        app.push()
+                    }
+                    echo '<--------------- Docker Publish Ended --------------->'
                 }
             }
         }
