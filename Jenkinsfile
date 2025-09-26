@@ -15,11 +15,8 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                script {
-                    def scannerHome = tool 'santhosh-sonar-scanner'  // Sonar Scanner binary
-                    withSonarQubeEnv('santhosh-sonar-scanner') {     // SonarQube Server connection
-                        sh "${scannerHome}/bin/sonar-scanner"
-                    }
+                withSonarQubeEnv('santhosh-sonar-scanner') {  // SonarQube server connection name
+                    sh "${tool 'santhosh-sonar-scanner'}/bin/sonar-scanner"
                 }
             }
         }
