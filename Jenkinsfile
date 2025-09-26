@@ -7,34 +7,29 @@ pipeline {
     }
 
     stages {
-        stage('Build & Package') {
+        stage('Build') {
             steps {
                 echo "-------- Build started ------------"
-                sh "mvn clean package -DskipTests=true"
+                sh "mvn clean install -DskipTests=true"
                 echo "-------- Build completed ------------"
             }
         }
 
-        stage('Run Tests') {
+        stage('Test') {
             steps {
                 echo "-------- Unit test started ------------"
-                sh "mvn test"
+                sh 'mvn surefire-report:report'
                 echo "-------- Unit test completed ----------"
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonarqube-server') {
+                withSonarQubeEnv('sonarqube-server') { // SonarQube server connection
                     sh "${tool 'santhosh-sonar-scanner'}/bin/sonar-scanner -Dsonar.projectKey=twittertrend"
                 }
             }
         }
-
-        stage('Archive JAR') {
-            steps {
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-            }
-        }
     }
 }
+
