@@ -10,7 +10,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo "-------- Build started ------------"
-                sh "mvn clean install -DskipTests=true"
+                sh "mvn clean deploy"
                 echo "-------- Build completed ------------"
             }
         }
@@ -32,3 +32,4 @@ pipeline {
         }
     }
 }
+
