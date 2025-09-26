@@ -6,10 +6,21 @@ pipeline {
         PATH = "${MAVEN_HOME}/bin:${PATH}"
     }
 
-    stages {   
+    stages {
         stage('Build') {
             steps {
                 sh "mvn clean install -DskipTests=true"
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    def scannerHome = tool 'santhosh-sonar-scanner'  // Sonar Scanner binary
+                    withSonarQubeEnv('santhosh-sonar-scanner') {     // SonarQube Server connection
+                        sh "${scannerHome}/bin/sonar-scanner"
+                    }
+                }
             }
         }
     }
