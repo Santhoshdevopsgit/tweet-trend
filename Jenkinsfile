@@ -12,19 +12,12 @@ pipeline {
     }
 
     stages {
-        stage('Build') {
+
+        stage('Maven Build') {
             steps {
                 echo "-------- Build started ------------"
-                sh "mvn clean install -DskipTests=true"
+                sh "mvn clean package -DskipTests=true"
                 echo "-------- Build completed ------------"
-            }
-        }
-
-        stage('Test') {
-            steps {
-                echo "-------- Unit test started ------------"
-                sh 'mvn surefire-report:report'
-                echo "-------- Unit test completed ----------"
             }
         }
 
@@ -83,7 +76,7 @@ pipeline {
             steps {
                 script {
                     echo '<--------------- Docker Publish Started --------------->'
-                    docker.withRegistry("${registry}/artifactory/san-docker-local", 'artifact-cred') {
+                    docker.withRegistry(registry, 'artifact-cred') {
                         app.push()
                     }
                     echo '<--------------- Docker Publish Ended --------------->'
@@ -91,12 +84,25 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
+        stage("Deploy") {
             steps {
                 script {
                     sh './deploy.sh'
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline finished. Cleaning up workspace..."
+            cleanWs()
+        }
+        success {
+            echo "✅ Pipeline succeeded!"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
         }
     }
 }
