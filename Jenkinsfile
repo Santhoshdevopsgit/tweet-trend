@@ -9,26 +9,37 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                // Compile and package the Maven project, skipping tests
-                echo "-------- build started ------------"
+                echo "-------- Build started ------------"
                 sh "mvn clean install -DskipTests=true"
-                echo "-------- build completed ------------"
+                echo "-------- Build completed ------------"
             }
         }
-        stage("test"){
-            steps{
-                echo "-------- unit test started ------------"
+
+        stage('Test') {
+            steps {
+                echo "-------- Unit test started ------------"
                 sh 'mvn surefire-report:report'
-                echo "-------- unit test completed ----------"
+                echo "-------- Unit test completed ----------"
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                // withSonarQubeEnv expects the **Server Connection Name** from Jenkins
-                withSonarQubeEnv('sonarqube-server') {
-                    // tool('...') gets the path of the Sonar Scanner binary
+                withSonarQubeEnv('sonarqube-server') { // SonarQube server connection
                     sh "${tool 'santhosh-sonar-scanner'}/bin/sonar-scanner -Dsonar.projectKey=twittertrend"
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    script {
+                        def qg = waitForQualityGate()
+                        if (qg.status != 'OK') {
+                            error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                        }
+                    }
                 }
             }
         }
