@@ -83,10 +83,18 @@ pipeline {
             steps {
                 script {
                     echo '<--------------- Docker Publish Started --------------->'
-                    docker.withRegistry(registry, 'artifact-cred') {
+                    docker.withRegistry("${registry}/artifactory/san-docker-local", 'artifact-cred') {
                         app.push()
                     }
                     echo '<--------------- Docker Publish Ended --------------->'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    sh './deploy.sh'
                 }
             }
         }
