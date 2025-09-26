@@ -1,3 +1,5 @@
+def registry = 'https://trialu7uj64.jfrog.io'
+
 pipeline {
     agent { label 'maven' }
 
@@ -7,41 +9,61 @@ pipeline {
     }
 
     stages {
-        stage('Build & Package') {
+        stage('Build') {
             steps {
                 echo "-------- Build started ------------"
-                sh "mvn clean package -DskipTests=true"
+                sh "mvn clean install -DskipTests=true"
                 echo "-------- Build completed ------------"
+            }
+        }
+
+        stage('Test') {
+            steps {
+                echo "-------- Unit test started ------------"
+                sh 'mvn surefire-report:report'
+                echo "-------- Unit test completed ----------"
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                // Use the SonarQube server configured in Jenkins
-                withSonarQubeEnv('sonarqube-server') {
-                    sh "${tool 'santhosh-sonar-scanner'}/bin/sonar-scanner \
-                        -Dsonar.projectKey=twittertrend \
-                        -Dsonar.sources=. \
-                        -Dsonar.java.binaries=target/classes \
-                        -Dsonar.sourceEncoding=UTF-8"
+                withSonarQubeEnv('sonarqube-server') { // SonarQube server connection
+                    sh "${tool 'santhosh-sonar-scanner'}/bin/sonar-scanner -Dsonar.projectKey=twittertrend"
                 }
             }
         }
 
-        stage('Archive JAR') {
+        stage("Jar Publish") {
             steps {
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-                echo "-------- Artifact archived ------------"
-            }
-        }
-    }
+                script {
+                    echo '<--------------- Jar Publish Started --------------->'
 
-    post {
-        success {
-            echo "Pipeline completed successfully!"
-        }
-        failure {
-            echo "Pipeline failed. Check logs for details."
+                    def server = Artifactory.newServer(
+                        url: "${registry}/artifactory",
+                        credentialsId: "artifact-cred"
+                    )
+
+                    def properties = "buildid=${env.BUILD_ID},commitid=${GIT_COMMIT}"
+
+                    def uploadSpec = """{
+                        "files": [
+                            {
+                                "pattern": "target/*.jar",
+                                "target": "san-libs-release-local/",
+                                "flat": "false",
+                                "props": "${properties}",
+                                "exclusions": ["*original*"]
+                            }
+                        ]
+                    }"""
+
+                    def buildInfo = server.upload(uploadSpec)
+                    buildInfo.env.collect()
+                    server.publishBuildInfo(buildInfo)
+
+                    echo '<--------------- Jar Publish Ended --------------->'
+                }
+            }
         }
     }
 }
