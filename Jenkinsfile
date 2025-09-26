@@ -57,7 +57,6 @@ pipeline {
                         ]
                     }"""
 
-<<<<<<< HEAD
                     def buildInfo = server.upload(uploadSpec)
                     buildInfo.env.collect()
                     server.publishBuildInfo(buildInfo)
@@ -68,6 +67,3 @@ pipeline {
         }
     }
 }
-=======
-                    def buildInfo = server.upload(u
->>>>>>> c42e9ba (added jfrog in jenkinsfile)
